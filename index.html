@@ -5,6 +5,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
+    <link rel="icon" href="favicon.png">
+
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
 
@@ -18,34 +20,44 @@
 
     <title>Deck list converter</title>
   </head>
-  <body>
-    <div class="container">
-      <h1>Deck list converter</h1>
+  <body class="d-flex flex-column h-100 bg-dark text-light">
+    <main class="flex-shrink-0">
+      <div class="container">
+        <h1>Deck list converter</h1>
 
-      <form>
-        <div class="input-group mb-3">
-          <select id="listTypeIn" class="form-select" aria-label="Select a list type">
-                <option>Select a list type to convert from</option>
-                <option value="tappedout" selected>TappedOut</option>
-                <option value="archidekt">Archidekt</option>
-              </select>
-          <span class="input-group-text"></span>
-          <select id="listTypeOut" class="form-select" aria-label="Select a list type">
-                <option>Select a list type to convert to</option>
-                <option value="tappedout">TappedOut</option>
-                <option value="archidekt" selected>Archidekt</option>
-              </select>
-        </div>
-	  
-        <div class="input-group mb-3">
-          <textarea id="listIn" class="form-control" placeholder="Deck list to convert" aria-label="Deck list to convert" rows="25"></textarea>
-          <span class="input-group-text"></span>
-          <textarea id="listOut" class="form-control" placeholder="Press the convert button to convert the deck list" aria-label="Press the convert button to convert the deck list"></textarea>
-        </div>
+        <form>
+          <div class="input-group mb-3">
+            <select id="listTypeIn" class="form-select bg-dark text-light" aria-label="Select a list type">
+                  <option disabled>Select a list type to convert from</option>
+                  <option value="tappedout" selected>TappedOut</option>
+                  <option value="archidekt">Archidekt</option>
+                </select>
+            <span class="input-group-text bg-dark text-light"></span>
+            <select id="listTypeOut" class="form-select bg-dark text-light" aria-label="Select a list type">
+                  <option disabled>Select a list type to convert to</option>
+                  <option value="tappedout">TappedOut</option>
+                  <option value="archidekt" selected>Archidekt</option>
+                </select>
+          </div>
+  	  
+          <div class="input-group mb-3">
+            <textarea id="listIn" class="form-control bg-dark text-light" placeholder="Deck list to convert" aria-label="Deck list to convert" rows="25"></textarea>
+            <span class="input-group-text bg-dark text-light"></span>
+            <textarea id="listOut" class="form-control bg-dark text-light" placeholder="Press the convert button to convert the deck list" aria-label="Press the convert button to convert the deck list"></textarea>
+          </div>
 
-        <button id="convertButton" type="button" class="btn btn-primary">Convert</button>
-      </form>
-    </div>
+          <button id="convertButton" type="button" class="btn btn-primary">Convert</button>
+        </form>
+
+        
+
+        <footer class="footer mt-auto py-3">
+          <div class="container">
+            <div>Icons made by <a href="https://www.freepik.com" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div>
+          </div>
+        </footer>
+      </div>
+    </main>
     <!-- Optional JavaScript; choose one of the two! -->
 
     <!-- Option 1: Bootstrap Bundle with Popper -->
