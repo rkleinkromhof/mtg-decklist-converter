@@ -31,12 +31,14 @@
                   <option disabled>Select a list type to convert from</option>
                   <option value="tappedout" selected>TappedOut</option>
                   <option value="archidekt">Archidekt</option>
+                  <option value="moxfield">Moxfield</option>
                 </select>
             <span class="input-group-text bg-dark text-light"></span>
             <select id="listTypeOut" class="form-select bg-dark text-light" aria-label="Select a list type">
                   <option disabled>Select a list type to convert to</option>
                   <option value="tappedout">TappedOut</option>
                   <option value="archidekt" selected>Archidekt</option>
+                  <option value="moxfield">Moxfield</option>
                 </select>
           </div>
   	  
@@ -46,10 +48,15 @@
             <textarea id="listOut" class="form-control bg-dark text-light" placeholder="Press the convert button to convert the deck list" aria-label="Press the convert button to convert the deck list"></textarea>
           </div>
 
-          <button id="convertButton" type="button" class="btn btn-primary">Convert</button>
+          <div class="row align-items-start">
+            <div class="col">
+              <button id="convertButton" type="button" class="btn btn-primary">Convert</button>
+            </div>
+            <div class="col">
+              <button id="switchButton" type="button" class="btn btn-primary">Switch</button>
+            </div>
+          </div>
         </form>
-
-        
 
         <footer class="footer mt-auto py-3">
           <div class="container">
@@ -93,6 +100,18 @@
         const converterOut = me.getConverter(me.elTypeOut.value);
 
         me.elOut.value = converterIn.parse(valueIn, converterOut);
+      }
+
+      switchLists() {
+        const me = this;
+        let selectInValue = me.elTypeIn.value;
+        let listInValue = me.elIn.value;
+        
+        me.elTypeIn.value = me.elTypeOut.value;
+        me.elTypeOut.value = selectInValue;
+
+        me.elIn.value = me.elOut.value;
+        me.elOut.value = listInValue;
       }
     }
 
@@ -148,6 +167,7 @@
         CM1: 'cma', // Commander Anthology
         GRV: 'pd3', // Graveborn
         MYS1: 'mb1' // Mystery Booster
+        // There's bound to be more of these, but for now I'll only add to this list when I encounter discrepancies.
       };
 
       #expansionCodeReverseCorrectionList = {
@@ -213,14 +233,14 @@
         let expansionCodeWithBrackets = expCodeAndCardNo ? ` (${expCodeAndCardNo})` : '';
         let commanderTag = p.isCmdr ? ' *CMDR*' : '';
         let foilTag = p.isFoil ? ' *F*' : '';
-        let category = p.categories.length ? ` #${p.categories.map(cat => cat.replace(' ', '_')).join(' #')}` : '';
+        let category = p.categories.length ? ` #${p.categories.map(cat => cat.replace(/ /gi, '_')).join(' #')}` : '';
 
         return `${p.count}x ${cardName}${expansionCodeWithBrackets}${commanderTag}${foilTag}${category}`
       }
     }
 
     class ArchidektListConverter extends ListConverter {
-      #cardLineParser = /^(?<count>[\d]*)x? (?<cardName>[\w\d-',.?! /]+[\w\d-',.?!]) ?(?:\((?<expansionCode>[\w]+)\))? ?(?<cardExpansionNo>[\d]+)? ?(?<isCmdr>\*CMDR\*)? ?(?<isFoil>\*F\*)? ?(?<categories>\[.+)?/i;
+      #cardLineParser = /^(?<count>[\d]*)x? (?<cardName>[\w\d-',.?! /]+[\w\d-',.?!]) ?(?:\((?<expansionCode>[\w]+)\))? ?(?<cardExpansionNo>[\d]+)? ?(?<isCmdr>\*CMDR\*)? ?(?<isFoil>\*F\*)? {0,2}(?:\[(?<category>[\w -]+)(?:{.+})?\])?/i;
 
       constructor() {
         super();
@@ -233,7 +253,7 @@
 
         if (value) {
           let groups = value.match(me.#cardLineParser).groups;
-          let categories = groups.categories ? groups.categories.substring(1, groups.categories.length - 1).split('] [') : [];
+          let categories = groups.category ? [groups.category] : []; // Archidekt only supports a single category per line.
 
           result = {
              count: groups.count || 1,
@@ -263,6 +283,45 @@
       }
     }
 
+    class MoxfieldListConverter extends ListConverter {
+      #cardLineParser = /^(?<count>[\d]*)x? (?<cardName>[\w\d-',.?! /]+[\w\d-',.?!]) ?(?:\((?<expansionCode>[\w]+)\))? ?(?<cardExpansionNo>[\d]+)? ?(?<isFoil>\*F\*)?/i;
+
+      constructor() {
+        super();
+      }
+      
+      parseLine(line) {
+        const me = this;
+        let value = line && line.trim();
+        let result = null;
+
+        if (value) {
+          let groups = value.match(me.#cardLineParser).groups;
+
+          result = {
+             count: groups.count || 1,
+             cardName: groups.cardName,
+             expansionCode: groups.expansionCode || null,
+             cardExpansionNo: groups.cardExpansionNo || null,
+             isCmdr: false, // Moxfield doesn't do Commander tags.
+             isFoil: !!groups.isFoil,
+             categories: [] // Moxfield doesn't use categories in import/export.
+          };
+          
+        }
+        return result;
+      }
+
+      print(parsedLine) {
+        const p = parsedLine;
+        let expansionCodeWithBrackets = p.expansionCode ? ` (${p.expansionCode})` : '';
+        let cardExpansionNo = p.expansionCode && p.cardExpansionNo ? ` ${p.cardExpansionNo}` : '';
+        let foilTag = p.isFoil ? ' *F*' : '';
+
+        return `${p.count}x ${p.cardName}${expansionCodeWithBrackets}${cardExpansionNo}${foilTag}`
+      }
+    }
+
     const cApp = new ConvertApp({
       elIn: document.getElementById('listIn'),
       elOut: document.getElementById('listOut'),
@@ -270,11 +329,15 @@
       elTypeOut: document.getElementById('listTypeOut'),
       converters: {
         tappedout: new TappedOutListConverter(),
-        archidekt: new ArchidektListConverter()
+        archidekt: new ArchidektListConverter(),
+        moxfield: new MoxfieldListConverter()
       }
     });
 
     document.getElementById('convertButton')
       .addEventListener("click", () => cApp.convertList());
+
+    document.getElementById('switchButton')
+      .addEventListener("click", () => cApp.switchLists());
   </script>
 </html>
