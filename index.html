@@ -137,6 +137,8 @@
           }
         });
 
+        parsedLines = converterOut.afterParse(parsedLines);
+
         return parsedLines.join('\n');
       }
       
@@ -150,6 +152,11 @@
       
       afterParseLine(originalLine, parsedLine) {
         // NOOP
+      }
+
+      afterParse(parsedLines) {
+        // NOOP
+        return parsedLines;
       }
 
       print(parsedLine) {
@@ -166,14 +173,22 @@
       #expansionCodeCorrectionList = {
         CM1: 'cma', // Commander Anthology
         GRV: 'pd3', // Graveborn
-        MYS1: 'mb1' // Mystery Booster
+        MYS1: 'mb1', // Mystery Booster
+        MYSTOR: 'fmb1', // Mystery Booster Store Edition
+
+        // Promo code; the value this translates to depends on the card. TappedOut uses this code as a catch-all.
+        // I'll translate it to '???' for now.
+        '000': '???'
+
         // There's bound to be more of these, but for now I'll only add to this list when I encounter discrepancies.
       };
 
       #expansionCodeReverseCorrectionList = {
         cma: 'cm1', // Commander Anthology
         pd3: 'GRV', // Graveborn
-        mb1: 'MYS1' // Mystery Booster
+        mb1: 'MYS1', // Mystery Booster
+        fmb1: 'MYSTOR', // Mystery Booster Store Edition
+        pg07: '000' // Gateway 2007
       };
 
       #normalizeExpansionCode(eCode) {
@@ -267,6 +282,17 @@
           
         }
         return result;
+      }
+
+       afterParse(parsedLines) {
+        let me = this;
+
+        return Array.prototype.sort.call(parsedLines, (firstLine, secondLine) => { 
+          let groupsLeft = firstLine.match(me.#cardLineParser).groups;
+          let groupsRight = secondLine.match(me.#cardLineParser).groups;
+
+          return groupsLeft.cardName.localeCompare(groupsRight.cardName);
+        });
       }
 
       print(parsedLine) {
