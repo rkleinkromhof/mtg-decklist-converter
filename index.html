@@ -78,19 +78,29 @@
   </body>
   
   <script type="text/javascript">
+    class ConverterFactory {
+      #converters = {
+        tappedout: () => new TappedOutListConverter(),
+        archidekt: () => new ArchidektListConverter(),
+        moxfield: () => new MoxfieldListConverter()
+      };
+
+      createConverter(name) {
+        return this.#converters[name]();
+      }
+    }
+
     class ConvertApp {
       constructor(config) {
         this.elIn = config.elIn;
         this.elOut = config.elOut;
         this.elTypeIn = config.elTypeIn;
         this.elTypeOut = config.elTypeOut;
-        this.converters = Object.create(config.converters);
+        this.converterFactory = config.factory;
       }
       
       getConverter(name) {
-        const converter = this.converters[name];
-
-        return converter;
+        return this.converterFactory.createConverter(name);
       }
       
       convertList() {
@@ -124,16 +134,18 @@
         let parsedLines = [];
 
         lines.forEach((line, index, arr) => {
-          if (line) { // skip empty lines)
-            me.beforeParseLine(line);
+          let lineValue = line && line.trim();
+
+          if (lineValue) { // Skip empty lines
+            me.beforeParseLine(lineValue);
         
-            let parsedLine = me.parseLine(line);
+            let parsedLine = me.parseLine(lineValue);
 
             if (parsedLine) {
               parsedLines.push(converterOut.print(parsedLine));
             }
         
-            me.afterParseLine(line, parsedLine);
+            me.afterParseLine(lineValue, parsedLine);
           }
         });
 
@@ -207,14 +219,13 @@
       
       parseLine(line) {
         const me = this;
-        let value = line && line.trim();
         let result = null;
 
-        if (value) {
-          if (value.startsWith(me.#categoryHeaderStart)) {
-            me.#lastCategoryHeader = value.substring(2);
+        if (line) {
+          if (line.startsWith(me.#categoryHeaderStart)) {
+            me.#lastCategoryHeader = line.substring(2);
           } else {
-            let groups = value.match(me.#cardLineParser).groups;
+            let groups = line.match(me.#cardLineParser).groups;
             let categories = groups.categories ? groups.categories.replaceAll('#', '').split(' ') : [];
 
             if (categories.length) {
@@ -355,11 +366,7 @@
       elOut: document.getElementById('listOut'),
       elTypeIn: document.getElementById('listTypeIn'),
       elTypeOut: document.getElementById('listTypeOut'),
-      converters: {
-        tappedout: new TappedOutListConverter(),
-        archidekt: new ArchidektListConverter(),
-        moxfield: new MoxfieldListConverter()
-      }
+      factory: new ConverterFactory()
     });
 
     document.getElementById('convertButton')
