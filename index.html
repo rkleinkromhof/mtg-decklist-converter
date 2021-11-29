@@ -310,7 +310,7 @@
 
       print(parsedLine) {
         const p = parsedLine;
-        let expansionCodeWithBrackets = p.expansionCode ? ` (${p.expansionCode})` : '';
+        let expansionCodeWithBrackets = p.expansionCode ? ` (${p.expansionCode.toLowerCase()})` : '';
         let cardExpansionNo = p.expansionCode && p.cardExpansionNo ? ` ${p.cardExpansionNo}` : '';
         let commanderTag = p.isCmdr ? ' *CMDR*' : '';
         let foilTag = p.isFoil ? ' *F*' : '';
