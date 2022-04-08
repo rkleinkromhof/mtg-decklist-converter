@@ -48,6 +48,20 @@
             <textarea id="listOut" class="form-control bg-dark text-light" placeholder="Press the convert button to convert the deck list" aria-label="Press the convert button to convert the deck list"></textarea>
           </div>
 
+          <div class="input-group mb-3">
+            <div class="col">
+              <!-- <label for="sortBy">Sort by</label> -->
+              <select id="sortBy" class="form-select bg-dark text-light" aria-label="Select a sorting option">
+                <option value="">Do not sort output</option>
+                <option value="cardName">Sort by card name</option>
+                <option value="category">Sort by category</option>
+              </select>
+            </div>
+            <div class="col">
+
+            </div>
+          </div>
+
           <div class="row align-items-start">
             <div class="col">
               <button id="convertButton" type="button" class="btn btn-primary">Convert</button>
@@ -96,6 +110,7 @@
         this.elOut = config.elOut;
         this.elTypeIn = config.elTypeIn;
         this.elTypeOut = config.elTypeOut;
+        this.elSortBy = config.elSortBy;
         this.converterFactory = config.factory;
       }
       
@@ -108,8 +123,9 @@
         let valueIn = me.elIn.value;
         const converterIn = me.getConverter(me.elTypeIn.value);
         const converterOut = me.getConverter(me.elTypeOut.value);
+        const sortByProp = me.elSortBy.value;
 
-        me.elOut.value = converterIn.parse(valueIn, converterOut);
+        me.elOut.value = converterIn.parse(valueIn, converterOut, sortByProp);
       }
 
       switchLists() {
@@ -128,7 +144,7 @@
     class ListConverter {
       #lineSeparatorChar = '\n';
 
-      parse(value, converterOut) {
+      parse(value, converterOut, sortByProp) {
         let me = this;
         let lines = value.split(me.#lineSeparatorChar);
         let parsedLines = [];
@@ -149,7 +165,7 @@
           }
         });
 
-        parsedLines = converterOut.afterParse(parsedLines);
+        parsedLines = converterOut.afterParse(parsedLines, sortByProp);
 
         return parsedLines.join('\n');
       }
@@ -243,6 +259,7 @@
                cardExpansionNo: groups.cardExpansionNo || null,
                isCmdr: !!groups.isCmdr,
                isFoil: !!groups.isFoil,
+               category: categories && categories[0] || null,
                categories: categories
             };
           }
@@ -292,6 +309,7 @@
              cardExpansionNo: groups.cardExpansionNo || null,
              isCmdr: !!groups.isCmdr,
              isFoil: !!groups.isFoil,
+             category: categories && categories[0] || null,
              categories: categories
           };
           
@@ -299,15 +317,18 @@
         return result;
       }
 
-       afterParse(parsedLines) {
+       afterParse(parsedLines, sortByProp) {
         let me = this;
+        let result = parsedLines;
 
-        return Array.prototype.sort.call(parsedLines, (firstLine, secondLine) => { 
-          let groupsLeft = firstLine.match(me.#cardLineParser).groups;
-          let groupsRight = secondLine.match(me.#cardLineParser).groups;
-
-          return groupsLeft.cardName.localeCompare(groupsRight.cardName);
-        });
+        if (sortByProp) {
+          result = me.#sortLines(result, 'cardName'); // Sort by name first.
+          
+          if (sortByProp !== 'cardName') {
+            result = me.#sortLines(result, sortByProp);
+          }
+        }
+        return result;
       }
 
       print(parsedLine) {
@@ -321,6 +342,28 @@
         let category = p.categories.length ? ` [${p.categories.join(', ')}]` : ''; // Join into a single category then.
 
         return `${p.count}x ${p.cardName}${expansionCodeWithBrackets}${cardExpansionNo}${commanderTag}${foilTag}${category}`
+      }
+
+      #sortLines(lines, prop) {
+        const me = this;
+        
+        return Array.prototype.sort.call(lines, (firstLine, secondLine) => { 
+          let valueLeft = me.#getPropValue(firstLine, prop);
+          let valueRight = me.#getPropValue(secondLine, prop);
+
+          if (valueLeft && valueRight) {
+            return valueLeft.localeCompare(valueRight);
+          } else if (valueRight) {
+            return -1;
+          }
+          return 0;
+        });
+      }
+
+      #getPropValue(line, propName) { 
+        let groups = line.match(this.#cardLineParser).groups;
+        
+        return groups[propName];
       }
     }
 
@@ -368,6 +411,7 @@
       elOut: document.getElementById('listOut'),
       elTypeIn: document.getElementById('listTypeIn'),
       elTypeOut: document.getElementById('listTypeOut'),
+      elSortBy: document.getElementById('sortBy'),
       factory: new ConverterFactory()
     });
 
